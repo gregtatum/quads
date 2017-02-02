@@ -1,0 +1,34 @@
+{
+  "name": "quads",
+  "version": "0.0.0",
+  "description": "Quad geometry tools",
+  "main": "index.js",
+  "scripts": {
+    "test": "node test | faucet",
+    "build": "babel quads.js > index.js",
+    "prepublish": "npm run build",
+    "lint": "standard"
+  },
+  "keywords": [
+    "webgl",
+    "stackgl",
+    "quads",
+    "gl",
+    "geometry",
+    "model",
+    "mesh"
+  ],
+  "author": "Greg Tatum",
+  "license": "MIT",
+  "dependencies": {
+    "gl-catmull-clark": "^1.0.0",
+    "gl-vec3": "^1.0.3"
+  },
+  "devDependencies": {
+    "babel": "^6.5.2",
+    "babel-cli": "^6.22.2",
+    "babel-preset-env": "^1.1.8",
+    "faucet": "0.0.1",
+    "tape": "^4.6.3"
+  }
+}
