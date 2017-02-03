@@ -653,12 +653,11 @@ function flip (quads, cell) {
  * quads simplicial complex will be generated. Both the quads simplicial
  * complex and the created cell are returned in an object.
  *
- * Options:
- * ```javascript
+ * @example <caption>Usage:</caption>
+ *
  * const {quads, cell} = createQuad({ positions: [[-1, 0, -1], [-1, 0, 1], [1, 0, 1], [1, 0, -1]] })
  * const {quads, cell} = createQuad({ w: 1, h: 1 })
  * const {quads, cell} = createQuad()
- * ```
  *
  * @param {Object} options
  * @param {Object} quads
@@ -1001,7 +1000,7 @@ function _mergePositionsIfEqual (quads, positionIndexA, positionIndexB) {
   }
 }
 
-/**
+/*
  * Utility function to split quads in a loop in a single direction, based off of the
  * previously split quad's positions. The cell orientation is based off the previously
  * split cell.
