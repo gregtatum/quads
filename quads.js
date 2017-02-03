@@ -2,10 +2,20 @@ const vec3 = require('gl-vec3')
 const catmullClark = require('gl-catmull-clark')
 
 /**
+ * Split a cell horizontally.
+ *
+ * ```
  *  b---bc---c
  *  |   |    |
  *  |   |    |
  *  a---ad---d
+ * ```
+ *
+ * @param {Object} $0 quad
+ * @param {Array} $0.positions
+ * @param {Array} $0.cells
+ * @param {Array} targetCell
+ * @param {Number} t Specifies where the split should be. Ranged from `0` to `1`
  */
 function splitVertical ({positions, cells}, targetCell, t = 0.5) {
   const [a, b, c, d] = targetCell
@@ -25,11 +35,18 @@ function splitVertical ({positions, cells}, targetCell, t = 0.5) {
 }
 
 /**
+ * Split a cell horizontally into two new disconnected cells.
+ *
+ * ```
  *  b---bc1  bc2---c
  *  |     |  |     |
  *  |     |  |     |
  *  a---ad1  ad2---d
- *  target
+ * ```
+ *
+ * @param {Object} quads
+ * @param {Array} targetCell
+ * @param {Number} t Specifies where the split should be. Ranged from `0` to `1`
  */
 function splitVerticalDisjoint (quads, targetCell, t = 0.5) {
   const {positions, cells, normals} = quads
@@ -61,11 +78,20 @@ function splitVerticalDisjoint (quads, targetCell, t = 0.5) {
 }
 
 /**
+ * Split a cell horizontally.
+ *
+ * ```
  *  b--------c
  *  |        |
  *  ab------cd
  *  |        |
  *  a--------d
+ * ```
+ *
+ * @param {Array} $0.positions
+ * @param {Array} $0.cells
+ * @param {Array} targetCell
+ * @param {Number} t Specifies where the split should be. Ranged from `0` to `1`
  */
 function splitHorizontal ({positions, cells}, targetCell, t = 0.5) {
   const [a, b, c, d] = targetCell
@@ -85,12 +111,20 @@ function splitHorizontal ({positions, cells}, targetCell, t = 0.5) {
 }
 
 /**
+ * Split a cell horizontally into two new disconnected cells.
+ *
+ * ```
  *  b--------c
  *  |        |
  *  ab1----cd1
  *  ab2----cd2
  *  | target |
  *  a--------d
+ * ```
+ *
+ * @param {Object} quads
+ * @param {Array} targetCell
+ * @param {Number} t Specifies where the split should be. Ranged from `0` to `1`
  */
 function splitHorizontalDisjoint (quads, targetCell, t = 0.5) {
   const {positions, cells, normals} = quads
@@ -122,6 +156,9 @@ function splitHorizontalDisjoint (quads, targetCell, t = 0.5) {
 }
 
 /**
+ * Inset a cell some value between `0` (its edges) and `1` (its center).
+ *
+ * ```
  *  b----------c
  *  |\   q1   /|
  *  | \      / |
@@ -131,6 +168,12 @@ function splitHorizontalDisjoint (quads, targetCell, t = 0.5) {
  *  | /      \ |
  *  |/   q3   \|
  *  a----------d
+ * ```
+ *
+ * @param {Object} quads
+ * @param {Array} targetCell
+ * @param {Number} t Specifies where the split should be. Ranged from `0` to `1`
+ * @returns {Array} cells `[q0, q1, q2, q3, tC]` where `tC` is the `targetCell`.
  */
 var inset = (() => {
   var center = [0, 0, 0]
@@ -176,6 +219,15 @@ var inset = (() => {
   }
 })()
 
+/**
+ * Given a target cell, first inset it, then move it along the cell's normal
+ * outwards by a given distance.
+ *
+ * @param {Object} quads
+ * @param {Array} targetCell
+ * @param {Number} insetT
+ * @param {Number} extrude
+ */
 var extrude = (() => {
   const toTranslate = []
   const translation = []
@@ -249,6 +301,16 @@ function calculatePositionIndexToCells (quads) {
   return toCells
 }
 
+/**
+ * Computes the average normal for a position given the connected cells.
+ *
+ * @param {Object} quads
+ * @param {Number} positionIndex
+ * @param {Array?} target = []
+ * @param {Map?} normalCache = new Map() can be provided to cache intermediate normal computations.
+ * @param {Number} positionIndexToCells
+ * @returns the `targetNormal`
+ */
 var averageNormalForPosition = (() => {
   const cellsCache = []
 
@@ -287,6 +349,10 @@ var averageNormalForPosition = (() => {
 })()
 
 /**
+ * Inset a cell some value between `0` (its edges) and `1` (its center), but
+ * keep the new cells disjoint so they do not share any positions.
+ *
+ * ```
  *      bT----------cT
  *  bL   \    qT    /   cR
  *  |\    \        /    /|
@@ -298,6 +364,12 @@ var averageNormalForPosition = (() => {
  *  |/    /        \    \|
  *  aL   /    qB    \   dR
  *      aB----------dB
+ * ```
+ *
+ * @param {Object} quads
+ * @param {Array} targetCell
+ * @param {Number?} t **=0**
+ * @returns {Array} cells `[q0, q1, q2, q3, tC]` where `tC` is the `targetCell`.
  */
 var insetDisjoint = (() => {
   var center = [0, 0, 0]
@@ -404,6 +476,16 @@ var insetDisjoint = (() => {
   }
 })()
 
+/**
+ * Given a target cell, first inset it, then move it along the cell's normal
+ * outwards by a given distance, but all new geometry generated will not
+ * share positions.
+ *
+ * @param {Object} quads
+ * @param {Array} targetCell
+ * @param {Number} insetT
+ * @param {Number} extrude
+ */
 var extrudeDisjoint = (() => {
   const toTranslate = []
   const translation = []
@@ -446,6 +528,14 @@ var extrudeDisjoint = (() => {
   }
 })()
 
+/**
+ * Computes the center of a cell
+ *
+ * @param {Object} quads
+ * @param {Array} cell
+ * @param {Array} target
+ * @returns {Array} the targetPosition
+ */
 function getCenter (quads, cell, target = []) {
   const a = quads.positions[cell[0]]
   const b = quads.positions[cell[1]]
@@ -457,6 +547,13 @@ function getCenter (quads, cell, target = []) {
   return target
 }
 
+/**
+ * Clones a cell. Returns the new cell.
+ *
+ * @param {Object} quads
+ * @param {Array} cell
+ * @returns {Array} a new cell
+ */
 function clone (quads, cell) {
   const index = quads.positions.length
   const clonedCell = [index, index + 1, index + 2, index + 3]
@@ -472,6 +569,15 @@ function clone (quads, cell) {
   return clonedCell
 }
 
+/**
+ * Updates all of the normals for all the positions using
+ * {@link #averageNormalForPosition}. If a normal doesn't exist,
+ * then it is created.
+ *
+ * @param {Object} quads
+ * @param {Array} cell
+ * @returns {Object} quads
+ */
 function updateNormals (quads, cell) {
   let normal = quads.normals[cell[0]]
   getCellNormal(quads, cell, normal)
@@ -483,7 +589,14 @@ function updateNormals (quads, cell) {
 var getCellNormal = (() => {
   const edgeA = []
   const edgeB = []
-
+  /**
+   * Compute a cell's normal regardless of it's neighboring cells.
+   *
+   * @param {Object} quads
+   * @param {Array} cell
+   * @param {Array?} target **= []**
+   * @returns {Array} The target normal.
+   */
   return function getCellNormal (quads, cell, target = []) {
     const positionA = quads.positions[cell[0]]
     const positionB = quads.positions[cell[1]]
@@ -495,6 +608,14 @@ var getCellNormal = (() => {
   }
 })()
 
+/**
+ * Given a position index, find any cells that include it.
+ *
+ * @param {Object} quads
+ * @param {Number} index
+ * @param {Array} target
+ * @returns {Array} The target cells.
+ */
 function getCellsFromPositionIndex (quads, index, target = []) {
   for (let i = 0; i < quads.cells.length; i++) {
     const cell = quads.cells[i]
@@ -505,6 +626,13 @@ function getCellsFromPositionIndex (quads, index, target = []) {
   return target
 }
 
+/**
+ * Flip a cell's normal to point the other way. Returns the cell.
+ *
+ * @param {Object} quads
+ * @param {Array} cell
+ * @returns {Array} The cell
+ */
 function flip (quads, cell) {
   const [a, b, c, d] = cell
   cell.reverse()
@@ -519,6 +647,23 @@ function flip (quads, cell) {
   return cell
 }
 
+/**
+ * Create a quad with options. If the optionalQuads object is passed, then the
+ * quad will be created inside of that simplicial complex, otherwise a new
+ * quads simplicial complex will be generated. Both the quads simplicial
+ * complex and the created cell are returned in an object.
+ *
+ * Options:
+ * ```javascript
+ * const {quads, cell} = createQuad({ positions: [[-1, 0, -1], [-1, 0, 1], [1, 0, 1], [1, 0, -1]] })
+ * const {quads, cell} = createQuad({ w: 1, h: 1 })
+ * const {quads, cell} = createQuad()
+ * ```
+ *
+ * @param {Object} options
+ * @param {Object} quads
+ * @returns {Object} `{quads, cell}`
+ */
 function createQuad (options, quads = {}) {
   if (!quads.positions) {
     quads.positions = []
@@ -590,6 +735,18 @@ function createQuad (options, quads = {}) {
   return {quads, cell}
 }
 
+/**
+ * Creates a quad box of the given dimensions, but with non-joined positions.
+ * This box renders as a flat shaded box. If the optionalQuads object is
+ * passed, then the box will be created inside of that simplicial complex,
+ * otherwise a new quads simplicial complex will be generated.
+ *
+ * @param {Number} x
+ * @param {Number} y
+ * @param {Number} z
+ * @param {Object} optionalQuads
+ * @returns {Object} a simplicial complex
+ */
 function createBoxDisjoint (x = 1, y = 1, z = 1, optionalQuads) {
   const {quads, cell} = createQuad({w: x, h: z}, optionalQuads)
   quads.positions.forEach(position => {
@@ -601,10 +758,30 @@ function createBoxDisjoint (x = 1, y = 1, z = 1, optionalQuads) {
   return quads
 }
 
+/**
+ * Creates a quad box of the given dimensions. This box will render as a
+ * smoothed out box, as the normals are averaged. This is typically used for a
+ * starting place for subdividing or extrusion operations. If the
+ * `optionalQuads` object is passed, then the box will be created inside of
+ * that simplicial complex, otherwise a new quads simplicial complex will be
+ * generated.
+ *
+ * @param {Number} x
+ * @param {Number} y
+ * @param {Number} z
+ * @param {Object} optionalQuads
+ * @returns {Object} a simplicial complex
+ */
 function createBox (x, y, z, optionalQuads) {
   return mergePositions(createBoxDisjoint(x, y, z, optionalQuads))
 }
 
+/**
+ * Combine all positions together and recompute the normals.
+ *
+ * @param {Object} quads
+ * @returns {Object} the quads
+ */
 function mergePositions (quads) {
   const {positions, normals, cells} = quads
   // Go through each position.
@@ -645,7 +822,14 @@ function mergePositions (quads) {
   }
   return quads
 }
-
+/**
+ * Returns an elements array using the given `ArrayType`, which can be used by WebGL.
+ *
+ * @param {Object} quads
+ * @param {String} drawMode
+ * @param {typeof} ArrayType
+ * @returns {Array} Elements using the given `ArrayType`, which can be used by WebGL.
+ */
 function elementsFromQuads (quads, drawMode = 'triangles', ArrayType = Uint16Array) {
   const countPerCell = drawMode === 'lines' ? 8 : 6
   const elements = new ArrayType(quads.cells.length * countPerCell)
@@ -685,6 +869,14 @@ function elementsFromQuads (quads, drawMode = 'triangles', ArrayType = Uint16Arr
   return elements
 }
 
+/**
+ * Updates all of the normals for all the positions using
+ * {@link #averageNormalForPosition}. If a normal doesn't exist,
+ * then it is created.
+ *
+ * @param {Object} quads
+ * @returns {Object} The quads
+ */
 function computeNormals (quads) {
   if (!quads.normals) {
     quads.normals = []
@@ -702,6 +894,23 @@ function computeNormals (quads) {
   return quads
 }
 
+/**
+ * Given a cell, walk along the quads in both directions and split the cell.
+ *
+ * ```
+ * *--------*--------*--------*--------*--------*--------*--------*
+ * |        |        |        |        |        |        |        |
+ * *        *<-------*--------*--cell--*--------*------->*        *
+ * |        |        |        |        |        |        |        |
+ * *--------*--------*--------*--------*--------*--------*--------*
+ * ```
+ *
+ * @param {Object} quads
+ * @param {Array} cell
+ * @param {Number} t Specifies where the split should be. Ranged from `0` to `1`
+ * @param {Boolean} opposite - will walk in the opposite direction, e.g. up and down, versus left and right
+ * @returns {Object} quads
+ */
 function splitLoop (quads, cell, t = 0.5, opposite) {
   let cellIndexA, cellIndexB, cellIndexC, cellIndexD
   if (opposite) {
@@ -853,6 +1062,16 @@ function _walkAndSplitLoop (quads, positionIndexLB, positionIndexMB, positionInd
   return newPositionIndex
 }
 
+/**
+ * Find a cell given two position indices. Optionally provide a `previousCell`
+ * that will not be matched against. Returns the first cell that matches.
+ *
+ * @param {Object} quads
+ * @param {Number} positionIndexA
+ * @param {Number} positionIndexB
+ * @param {Array?} previousCell - Optional will not be matched against
+ * @returns {Array} Elements using the given `ArrayType`, which can be used by WebGL.
+ */
 function getCellFromEdge (quads, positionIndexA, positionIndexB, previousCell) {
   return quads.cells.find(cell => {
     if (cell === previousCell) {
@@ -871,6 +1090,21 @@ function getCellFromEdge (quads, positionIndexA, positionIndexB, previousCell) {
   })
 }
 
+/**
+ * Get all newly created geometry of the given type from whatever arbitrary
+ * operations were done on the quads. This assumes new geometry was created
+ * and not destroyed.
+ *
+ * @example <caption>Usage:</caption>
+ * const extrudedCells = quad.getNewGeometry(quads, "cells", () => {
+ *   quad.extrude(quads, tipCell, 0.5, 3)
+ * });
+ *
+ * @param {Object} quads
+ * @param {Number} key
+ * @param {Function} callback
+ * @returns {Array}
+ */
 function getNewGeometry (quads, key, callback) {
   const geometry = quads[key]
   let start = geometry.length
@@ -878,6 +1112,17 @@ function getNewGeometry (quads, key, callback) {
   return geometry.slice(start, geometry.length)
 }
 
+/**
+ * Use catmull clark subdivision to smooth out the geometry. All normals will
+ * be recomputed. Under the hood this is a convenience function for the
+ * module [gl-catmull-clark](https://www.npmjs.com/package/gl-catmull-clark).
+ *
+ * @param {Object} quads
+ * @param {Number} subdivisions
+ * @param {Array} positions
+ * @param {Array} cells
+ * @returns {Object} quads
+ */
 function subdivide (quads, subdivisions, positions = quads.positions, cells = quads.cells) {
   const result = catmullClark(positions, cells, subdivisions, false)
   quads.positions = result.positions
@@ -886,10 +1131,26 @@ function subdivide (quads, subdivisions, positions = quads.positions, cells = qu
   return quads
 }
 
+/**
+ * Computes all of the centers of all the cells.
+ *
+ * @param {Object} quads
+ * @returns A new array
+ */
 function computeCenterPositions (quads) {
   return quads.cells.map(cell => computeCellCenter(quads, cell))
 }
 
+/**
+ * Computes the center of a single cell.
+ *
+ * @param {Object} quads
+ * @param {Number} $1.aI
+ * @param {Number} $1.bI
+ * @param {Number} $1.cI
+ * @param {Number} $1.dI
+ * @returns A new array
+ */
 function computeCellCenter (quads, [aI, bI, cI, dI]) {
   const { positions } = quads
   const a = positions[aI]
@@ -903,6 +1164,28 @@ function computeCellCenter (quads, [aI, bI, cI, dI]) {
   ]
 }
 
+/**
+ * Given a cell, walk a loop and inset the loop, where 0 is the inset being on
+ * the edge, and 1 the inset being in the enter. Setting opposite to true will
+ * make the cell walk the loop in the opposite direction, e.g. up/down rather
+ * than left/right.
+ *
+ * ```
+ * *----*----*----*----*----*----*----*----*
+ * |    |    |    |    |    |    |    |    |
+ * |----|----|----|----|----|--->|    |    |
+ * |    |    |    |    |    |    |    |    |
+ * |----|----|----|----|----|--->|    |    |
+ * |    |    |    |    |    |    |    |    |
+ * *----*----*----*----*----*----*----*----*
+ * ```
+ *
+ * @param {Object} quads
+ * @param {Array} cell
+ * @param {Number} t Specifies where the split should be. Ranged from `0` to `1`
+ * @param {Boolean} opposite - will walk in the opposite direction, e.g. up and down, versus left and right
+ * @returns {Object} quads
+ */
 function insetLoop (quads, cell, t = 0.5, opposite) {
   const tA = 1 - 0.5 * t
   const tB = 0.5 * t + (1 - tA) * t
@@ -911,6 +1194,16 @@ function insetLoop (quads, cell, t = 0.5, opposite) {
   return quads
 }
 
+/**
+ * Gets a loop of cells. Given a single cell, start walking in both
+ * directions to select a loop. .
+ *
+ * @param {Object} quads
+ * @param {Array} cell
+ * @param {String} type - can either be `"cells"`, `"positions"`, or `"normals"`.
+ * @param {Boolean} opposite - will walk in the opposite direction, e.g. up and down, versus left and right
+ * @returns {Array} an array according to the `type`.
+ */
 function getLoop (quads, cell, type, opposite) {
   if (type === 'cells') {
     return _getLoopCells(quads, cell, opposite)
@@ -999,6 +1292,13 @@ function _getLoopOneDirection (quads, cell, type, indexA, indexB) {
   return loop
 }
 
+/**
+ * Clone all existing geometry, and mirror it about the given axis.
+ *
+ * @param {Object} quads
+ * @param {Array} cells
+ * @param {Number} axis - is either `0`, `1`, or `2`, which represents the `x`, `y`, and `z` axis respectively.
+ */
 function mirror (quads, cells, axis) {
   const mirrorMap = {}
 

@@ -7,6 +7,7 @@
     "test": "node test | faucet",
     "build": "babel quads.js > index.js",
     "prepublish": "npm run build",
+    "docs": "documentation readme --sort-order=alpha --section=API quads.js",
     "lint": "standard"
   },
   "keywords": [
@@ -28,6 +29,7 @@
     "babel": "^6.5.2",
     "babel-cli": "^6.22.2",
     "babel-preset-env": "^1.1.8",
+    "documentation": "^4.0.0-beta.18",
     "faucet": "0.0.1",
     "tape": "^4.6.3"
   }
