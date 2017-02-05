@@ -1,6 +1,6 @@
 {
   "name": "quads",
-  "version": "0.0.0",
+  "version": "1.0.0",
   "description": "Quad geometry tools",
   "main": "index.js",
   "scripts": {
