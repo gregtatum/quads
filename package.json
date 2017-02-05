@@ -1,11 +1,11 @@
 {
   "name": "quads",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Quad geometry tools",
   "main": "index.js",
   "repository": {
-    "type" : "git",
-    "url" : "https://github.com/gregtatum/quads"
+    "type": "git",
+    "url": "https://github.com/gregtatum/quads"
   },
   "scripts": {
     "test": "node test | faucet",
