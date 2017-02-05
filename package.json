@@ -7,7 +7,10 @@
     "test": "node test | faucet",
     "build": "babel quads.js > index.js",
     "prepublish": "npm run build",
-    "docs": "documentation readme --sort-order=alpha --section=API quads.js",
+    "docs": "npm run docs-source && npm run docs-types && npm run docs-three",
+    "docs-source": "documentation readme --sort-order=alpha --section=API quads.js",
+    "docs-types": "documentation readme --sort-order=source --section=Types types.js",
+    "docs-three": "documentation readme --sort-order=source --section=Three three.js",
     "lint": "standard"
   },
   "keywords": [
@@ -26,7 +29,6 @@
     "gl-vec3": "^1.0.3"
   },
   "devDependencies": {
-    "babel": "^6.5.2",
     "babel-cli": "^6.22.2",
     "babel-preset-env": "^1.1.8",
     "documentation": "^4.0.0-beta.18",
