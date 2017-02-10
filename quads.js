@@ -569,6 +569,49 @@ function clone (mesh, cell) {
 }
 
 /**
+ * Clones a group of cells and their geometry. Use getNewGeometry to capture the newly
+ * created geometry.
+ *
+ * @param {SimplicialComplex} mesh
+ * @param {Cell[]} cells
+ * @returns {SimplicialComplex} the original mesh.
+ */
+function cloneCells (mesh, cells) {
+  // Get a list of the position indices used
+  const positions = []
+  for (let i = 0; i < cells.length; i++) {
+    const cell = cells[i]
+    for (let j = 0; j < cell.length; j++) {
+      const positionIndex = cell[j]
+      positions[positionIndex] = positionIndex
+    }
+  }
+  const indices = positions.filter(i => i !== undefined)
+
+  // Clone the cells.
+  const cellIndexOffset = mesh.positions.length
+  const cellsLength = cells.length
+  for (let i = 0; i < cellsLength; i++) {
+    const cell = cells[i]
+    mesh.cells.push(
+      cell.map(cellIndex => indices.indexOf(cellIndex) + cellIndexOffset)
+    )
+  }
+
+  // Clone the positions.
+  for (let i = 0; i < indices.length; i++) {
+    mesh.positions.push(mesh.positions[indices[i]].slice())
+  }
+
+  // Clone the normals.
+  for (let i = 0; i < indices.length; i++) {
+    mesh.normals.push(mesh.normals[indices[i]].slice())
+  }
+
+  return mesh
+}
+
+/**
  * Updates all of the normals for all the positions using
  * {@link #averageNormalForPosition}. If a normal doesn't exist,
  * then it is created.
@@ -1325,6 +1368,7 @@ function mirror (mesh, cells, axis) {
 module.exports = {
   averageNormalForPosition,
   clone,
+  cloneCells,
   computeCenterPositions,
   computeCellCenter,
   computeNormals,
