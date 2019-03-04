@@ -316,7 +316,7 @@ var averageNormalForPosition = (() => {
   return function averageNormalForPosition (mesh, positionIndex, target = [], normalCache = new Map(), positionIndexToCells) {
     let cells
     if (positionIndexToCells) {
-      cells = positionIndexToCells[positionIndex]
+      cells = positionIndexToCells.get(positionIndex)
     } else {
       cells = getCellsFromPositionIndex(mesh, positionIndex, cellsCache)
     }
@@ -1187,20 +1187,20 @@ function computeCenterPositions (mesh) {
  *
  * @param {SimplicialComplex} mesh
  * @param {Cell} cell
+ * @param {Position} targetPosition, defaults to a new array
  * @returns {Position} center
  */
-function computeCellCenter (mesh, cell) {
+function computeCellCenter (mesh, cell, target = []) {
   const [aI, bI, cI, dI] = cell
   const { positions } = mesh
   const a = positions[aI]
   const b = positions[bI]
   const c = positions[cI]
   const d = positions[dI]
-  return [
-    (a[0] + b[0] + c[0] + d[0]) * 0.25,
-    (a[1] + b[1] + c[1] + d[1]) * 0.25,
-    (a[2] + b[2] + c[2] + d[2]) * 0.25
-  ]
+  target[0] = (a[0] + b[0] + c[0] + d[0]) * 0.25
+  target[1] = (a[1] + b[1] + c[1] + d[1]) * 0.25
+  target[2] = (a[2] + b[2] + c[2] + d[2]) * 0.25
+  return target
 }
 
 /**
